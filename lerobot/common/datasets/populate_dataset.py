@@ -229,7 +229,7 @@ def init_dataset(
     return dataset
 
 
-def add_frame(dataset, observation, action):
+def add_frame(dataset, observation, action, reward=None):
     if "current_episode" not in dataset:
         # initialize episode dictionary
         ep_dict = {}
@@ -244,6 +244,8 @@ def add_frame(dataset, observation, action):
         ep_dict["frame_index"] = []
         ep_dict["timestamp"] = []
         ep_dict["next.done"] = []
+        if reward is not None:
+            ep_dict["next.reward"] = []
 
         dataset["current_episode"] = ep_dict
         dataset["current_frame_index"] = 0
@@ -259,6 +261,9 @@ def add_frame(dataset, observation, action):
     ep_dict["frame_index"].append(frame_index)
     ep_dict["timestamp"].append(frame_index / fps)
     ep_dict["next.done"].append(False)
+    print("REWARD: ", reward)
+    if reward is not None:
+        ep_dict["next.reward"].append(int(reward))
 
     img_keys = [key for key in observation if "image" in key]
     non_img_keys = [key for key in observation if "image" not in key]
@@ -327,6 +332,8 @@ def save_current_episode(dataset):
     ep_dict["frame_index"] = torch.tensor(ep_dict["frame_index"])
     ep_dict["timestamp"] = torch.tensor(ep_dict["timestamp"])
     ep_dict["next.done"] = torch.tensor(ep_dict["next.done"])
+    if "next.reward" in ep_dict:
+        ep_dict["next.reward"] = torch.tensor(ep_dict["next.reward"])
 
     ep_path = episodes_dir / f"episode_{episode_index}.pth"
     torch.save(ep_dict, ep_path)
